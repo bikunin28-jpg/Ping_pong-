@@ -14,7 +14,7 @@ score_left = 0
 score_right = 0
 font1 = font.SysFont('Arial', 40)
 font2 = font.SysFont('Arial', 100)
-finish = False
+finish = True
 class GameSprite(sprite.Sprite):
     def __init__(self, plr_image, plr_x, plr_y, plr_speed, plr_width, plr_height):
         super ().__init__()
@@ -56,15 +56,35 @@ class Ball(GameSprite):
         self.rect.y += self.speed_y
         if self.rect.y <= 0 or self.rect.y >= h-self.height:
             self.speed_y *= -1
-        if sprite.collide_rect(self, mag):
+        if sprite.collide_rect(self, mag) and self.rect.x > 100:
             self.speed_x = -self.speed
-        if sprite.collide_rect(self, mechanikus):
+        if sprite.collide_rect(self, mechanikus) and self.rect.x < 1275:
             self.speed_x = self.speed
+class Button(sprite.Sprite):
+    def __init__(self, color, plr_x, plr_y, plr_width, plr_height):
+        super ().__init__()
+        self.image = Surface((plr_width, plr_height))
+        self.image.fill(color)
+        self.rect = self.image.get_rect()
+        self.rect.x = plr_x
+        self.rect.y = plr_y
+        self.width = plr_width
+        self.height = plr_height
+    def set_text(self, text, size, color):
+        self.text = font.SysFont('Arial', size).render(text, True, color)
 
+    def reset(self, shiftx, shifty):
+        window.blit(self.image, (self.rect.x, self.rect.y))
+        window.blit(self.text,(self.rect.x + shiftx, self.rect.y + shifty))
+
+    def collide_point(self, x, y):
+        return self.rect.collidepoint(x, y)
 
 mag = Player('koldun.png', 50, 440, 12, 100, 245)
 mechanikus = Player('mechanikus.png', 1225, 440, 12, 120,245)
 ball = Ball('ball.png', 650, 432, 12, 100, 100)
+start = Button((100,221,95), 650, 480, 135, 65) 
+start.set_text('Старт', 50, (0, 0, 0))
 game = True
 while game:
     window.blit(background, (0,0))
@@ -72,6 +92,16 @@ while game:
     for e in event.get():
         if e.type == QUIT:
             game = False
+        if e.type == MOUSEBUTTONDOWN:
+            x,y = e.pos 
+            if finish and start.collide_point(x,y):
+                score_left = 0 
+                score_right = 0
+                finish = False
+                ball.rect.x = 650
+                ball.rect.y = 432
+                mechanikus.rect.y = 440
+                mag.rect.y = 440
     if not finish:
         mag.reset()
         mag.update()
@@ -79,6 +109,8 @@ while game:
         mechanikus.update2()
         ball.reset()
         ball.update()
+    else:
+        start.reset(10, 3)
     text_left = font1.render('Счет:' + str(score_left), 1, (255, 255, 255))
     text_right = font1.render('Счет:' + str(score_right), 1, (255, 255, 255))
     window.blit(text_left, (10,20))
